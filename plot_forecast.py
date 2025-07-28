@@ -1,36 +1,49 @@
+
 import matplotlib.pyplot as plt
 from pymongo import MongoClient
 from datetime import datetime
 
-# MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client["weather_db"]
-forecast_col = db["forecast"]
+# connect to MongoDB
+mongo = MongoClient("mongodb://localhost:27017/")
+db = mongo["weather_db"]
+forecast_data = db["forecast"]
 
-# Change this to your desired city
-CITY = "Los Angeles"
+CITY_NAME = "Los Angeles"
 
-def plot_forecast(city):
-    # Get latest forecast document
-    doc = forecast_col.find_one({"city": city}, sort=[("timestamp", -1)])
+def show_plot(city):
+    doc = forecast_data.find_one({"city": city}, sort=[("timestamp", -1)])
     if not doc:
-        print("No forecast data found.")
+        print("No data found for", city)
         return
 
-    data = doc["data"]["list"]
+    forecast_list = doc.get("data", {}).get("list", [])
+    if not forecast_list:
+        print("Forecast list empty for", city)
+        return
 
-    times = [datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S") for item in data]
-    temps = [item["main"]["temp"] for item in data]
+    timestamps = []
+    temps = []
+
+    for item in forecast_list:
+        try:
+            dt = datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S")
+            temp = item["main"]["temp"]
+            timestamps.append(dt)
+            temps.append(temp)
+        except Exception as e:
+            print("Skip entry:", e)
+            continue
 
     plt.figure(figsize=(12, 5))
-    plt.plot(times, temps, marker='o', linestyle='-', color='blue')
-    plt.title(f"Temperature Forecast for {city}")
+    plt.plot(timestamps, temps, color="orange", linestyle="--", marker="o")
+    plt.title(f"{city} Temp Forecast (next few days)")
     plt.xlabel("Time")
-    plt.ylabel("Temperature (°F)")
-    plt.grid(True)
-    plt.tight_layout()
+    plt.ylabel("Temp (°F)")
     plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.grid(True)
     plt.show()
 
+
 if __name__ == "__main__":
-    plot_forecast(CITY)
+    show_plot(CITY_NAME)
