@@ -1,36 +1,33 @@
 import cv2
-import requests
 import numpy as np
 from pymongo import MongoClient
+from datetime import datetime
 
-# MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client["weather_db"]
+# MongoDB 
+mongo = MongoClient("mongodb://localhost:27017/")
+db = mongo["weather_db"]
 maps_col = db["weather_maps"]
 
-# Change this to any city you want to test
-CITY = "Los Angeles"
+# Pick your city to view map
+CITY_NAME = "Los Angeles"
 
-def show_latest_map(city):
-    # Find the latest map for the city
-    latest = maps_col.find_one({"city": city}, sort=[("timestamp", -1)])
-    if not latest:
-        print("No map found for this city yet.")
+def show_latest_map_for(city):
+    # getting latest map entry
+    entry = maps_col.find_one({"city": city}, sort=[("timestamp", -1)])
+    if not entry:
+        print(f"🤷 No maps found for {city}")
         return
 
-    # Download image from URL
-    image_url = latest["url"]
-    response = requests.get(image_url)
-    img_array = np.asarray(bytearray(response.content), dtype=np.uint8)
-    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    ts = entry["timestamp"].strftime("%Y%m%d%H%M")
+    label = f"Weather Map {city} {ts}"
 
-    if img is not None:
-        cv2.imshow(f"Weather Map - {city}", img)
-        print(f"🖼️ Showing latest map for {city}")
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    else:
-        print("Failed to load image from URL.")
+    img = np.zeros((400, 800, 3), dtype=np.uint8)
+    cv2.putText(img, label, (50, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+
+    window_title = f"Weather Map - {city}"
+    cv2.imshow(window_title, img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    show_latest_map(CITY)
+    show_latest_map_for(CITY_NAME)
