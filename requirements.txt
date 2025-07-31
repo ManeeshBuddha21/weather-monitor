@@ -1,5 +1,6 @@
-requests
-pymongo
-python-dotenv
-matplotlib
-opencv-python
+requests            # to call the weather API
+pymongo             # to talk to MongoDB
+python-dotenv       # to read API key from .env file
+matplotlib          # for drawing the graph
+pillow              # to handle map images (PNG)
+tk                  # GUI stuff (comes with Python but just in case)

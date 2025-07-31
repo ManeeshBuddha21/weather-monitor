@@ -1,4 +1,4 @@
 {
   "locations": ["Los Angeles", "New York", "San Francisco"],
-  "refresh_interval": 3
+  "refresh_interval": 180
 }
